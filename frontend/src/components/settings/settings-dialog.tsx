@@ -14,6 +14,7 @@ import {
 import {
   autoMarkReadOptions,
   articlePageSizeOptions,
+  dateFormatOptions,
   supportedLocales,
   usePreferencesStore,
   useUIStore,
@@ -24,7 +25,7 @@ import { ensureLocaleMessages } from "@/lib/i18n/messages";
 import { APIError, settingsAPI, type UpdateSettingsRequest } from "@/lib/api";
 import { waitForSettingsSeed } from "@/lib/settings-sync";
 import type { AppLocale } from "@/store/preferences";
-import { cn } from "@/lib/utils";
+import { cn, formatAbsoluteDate } from "@/lib/utils";
 
 function GithubIcon({ className }: { className?: string }) {
   return (
@@ -122,9 +123,11 @@ function GeneralContent() {
     locale,
     articlePageSize,
     autoMarkRead,
+    dateFormat,
     setLocale,
     setArticlePageSize,
     setAutoMarkRead,
+    setDateFormat,
   } = usePreferencesStore();
   const applySetting = useApplySetting();
 
@@ -146,6 +149,21 @@ function GeneralContent() {
           : t("settings.autoMarkRead.afterSeconds", {
               seconds: Number.parseInt(option, 10),
             }),
+  }));
+  // Each option previews today's date in its layout; the fixed layouts carry
+  // their conventional name, which needs no translation.
+  const dateFormatNames: Record<(typeof dateFormatOptions)[number], string> = {
+    auto: t("settings.dateFormat.auto"),
+    uk: "UK",
+    us: "US",
+    iso: "ISO 8601",
+    eu: "EU",
+    long: t("settings.dateFormat.long"),
+  };
+  const today = new Date();
+  const dateFormatItems = dateFormatOptions.map((option) => ({
+    value: option,
+    label: `${dateFormatNames[option]} (${formatAbsoluteDate(today, option, locale)})`,
   }));
   const themeItems = [
     { value: "light", label: t("settings.theme.light") },
@@ -318,6 +336,36 @@ function GeneralContent() {
           </SelectTrigger>
           <SelectContent>
             {autoMarkReadItems.map((item) => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Date format (local-only, so no server sync) */}
+      <div className="flex items-center justify-between gap-6">
+        <div className="min-w-0 space-y-1">
+          <p className="text-sm font-medium">
+            {t("settings.dateFormat.label")}
+          </p>
+          <p className="text-[13px] text-muted-foreground">
+            {t("settings.dateFormat.description")}
+          </p>
+        </div>
+        <Select
+          items={dateFormatItems}
+          value={dateFormat}
+          onValueChange={(v) => {
+            if (v) setDateFormat(v);
+          }}
+        >
+          <SelectTrigger className="w-auto gap-2 border-border">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {dateFormatItems.map((item) => (
               <SelectItem key={item.value} value={item.value}>
                 {item.label}
               </SelectItem>

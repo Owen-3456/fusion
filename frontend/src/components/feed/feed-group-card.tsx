@@ -10,7 +10,7 @@ import {
 import { getFaviconUrl } from "@/lib/api/favicon";
 import { getFeedErrorPreview } from "@/lib/feed-error";
 import type { TranslationKey } from "@/lib/i18n";
-import { cn, formatDate } from "@/lib/utils";
+import { cn, useFormatDate } from "@/lib/utils";
 import type { Feed, Group } from "@/lib/api";
 
 interface FeedGroupCardProps {
@@ -60,6 +60,7 @@ export function FeedGroupCard({
   onChangeMobileErrorTooltipFeedId,
   t,
 }: FeedGroupCardProps) {
+  const formatDate = useFormatDate();
   return (
     <div className="overflow-hidden rounded-lg border">
       <div

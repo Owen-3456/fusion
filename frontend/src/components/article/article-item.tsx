@@ -1,7 +1,7 @@
 import { Circle, CircleCheck, Star, ExternalLink } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
-import { cn, formatDate, extractSummary } from "@/lib/utils";
+import { cn, useFormatDate, extractSummary } from "@/lib/utils";
 import type { Item } from "@/lib/api";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 import { toSafeExternalUrl } from "@/lib/safe-url";
@@ -30,6 +30,7 @@ export function ArticleItem({
   feedFaviconUrl,
 }: ArticleItemProps) {
   const { t } = useI18n();
+  const formatDate = useFormatDate();
 
   const isSelected = selectedArticleId === article.id;
   const safeArticleLink = toSafeExternalUrl(article.link);

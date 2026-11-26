@@ -23,9 +23,24 @@ export type ArticlePageSize = (typeof articlePageSizeOptions)[number];
 export const autoMarkReadOptions = ["off", "open", "5", "10", "30"] as const;
 export type AutoMarkRead = (typeof autoMarkReadOptions)[number];
 
+// How absolute dates render in the UI. "auto" follows the UI language's
+// locale conventions; the rest are fixed layouts independent of language.
+// Local-only (not synced to the server): it is a display preference that
+// may reasonably differ per device.
+export const dateFormatOptions = [
+  "auto",
+  "uk",
+  "us",
+  "iso",
+  "eu",
+  "long",
+] as const;
+export type DateFormat = (typeof dateFormatOptions)[number];
+
 const localeSet = new Set<AppLocale>(supportedLocales);
 const articlePageSizeSet = new Set<number>(articlePageSizeOptions);
 const autoMarkReadSet = new Set<AutoMarkRead>(autoMarkReadOptions);
+const dateFormatSet = new Set<DateFormat>(dateFormatOptions);
 
 function resolveSupportedLocale(locale: string): AppLocale | null {
   const normalized = locale.toLowerCase().replace("_", "-");
@@ -48,6 +63,7 @@ const defaultLocale: AppLocale =
   "en";
 const defaultArticlePageSize: ArticlePageSize = 10;
 const defaultAutoMarkRead: AutoMarkRead = "off";
+const defaultDateFormat: DateFormat = "auto";
 
 function normalizeLocale(locale: string): AppLocale {
   const supportedLocale = resolveSupportedLocale(locale);
@@ -75,6 +91,12 @@ function normalizeAutoMarkRead(value: string | undefined | null): AutoMarkRead {
     : defaultAutoMarkRead;
 }
 
+function normalizeDateFormat(value: string | undefined | null): DateFormat {
+  return value != null && dateFormatSet.has(value as DateFormat)
+    ? (value as DateFormat)
+    : defaultDateFormat;
+}
+
 // "off" disables the feature; every other member maps to a delay where 0
 // means "as soon as the article is open".
 export function autoMarkReadDelayMs(option: AutoMarkRead): number | null {
@@ -88,9 +110,11 @@ export interface PreferencesState {
   locale: AppLocale;
   articlePageSize: ArticlePageSize;
   autoMarkRead: AutoMarkRead;
+  dateFormat: DateFormat;
   setLocale: (locale: string) => void;
   setArticlePageSize: (size: number) => void;
   setAutoMarkRead: (option: string) => void;
+  setDateFormat: (format: string) => void;
 }
 
 export const usePreferencesStore = create<PreferencesState>()(
@@ -99,11 +123,14 @@ export const usePreferencesStore = create<PreferencesState>()(
       locale: defaultLocale,
       articlePageSize: defaultArticlePageSize,
       autoMarkRead: defaultAutoMarkRead,
+      dateFormat: defaultDateFormat,
       setLocale: (locale) => set({ locale: normalizeLocale(locale) }),
       setArticlePageSize: (size) =>
         set({ articlePageSize: normalizeArticlePageSize(size) }),
       setAutoMarkRead: (option) =>
         set({ autoMarkRead: normalizeAutoMarkRead(option) }),
+      setDateFormat: (format) =>
+        set({ dateFormat: normalizeDateFormat(format) }),
     }),
     {
       name: "fusion-preferences",
@@ -112,6 +139,7 @@ export const usePreferencesStore = create<PreferencesState>()(
         locale: state.locale,
         articlePageSize: state.articlePageSize,
         autoMarkRead: state.autoMarkRead,
+        dateFormat: state.dateFormat,
       }),
       merge: (persistedState, currentState) => {
         const persisted = persistedState as Partial<PreferencesState> | undefined;
@@ -124,6 +152,9 @@ export const usePreferencesStore = create<PreferencesState>()(
           ),
           autoMarkRead: normalizeAutoMarkRead(
             persisted?.autoMarkRead ?? currentState.autoMarkRead,
+          ),
+          dateFormat: normalizeDateFormat(
+            persisted?.dateFormat ?? currentState.dateFormat,
           ),
         };
       },

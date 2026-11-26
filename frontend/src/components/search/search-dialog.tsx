@@ -24,11 +24,12 @@ import { useUIStore } from "@/store";
 import { useFeedLookup } from "@/queries/feeds";
 import { useUrlState } from "@/hooks/use-url-state";
 import { useI18n } from "@/lib/i18n";
-import { formatDate } from "@/lib/utils";
+import { useFormatDate } from "@/lib/utils";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 
 export function SearchDialog() {
   const { t } = useI18n();
+  const formatDate = useFormatDate();
   const { isSearchOpen, setSearchOpen, setEditFeedOpen, setShortcutsOpen } =
     useUIStore();
   const { getFeedById } = useFeedLookup();

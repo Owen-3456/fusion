@@ -26,7 +26,7 @@ import { useArticleList } from "@/hooks/use-article-list";
 import { useArticleNavigation } from "@/hooks/use-keyboard";
 import { useAutoMarkRead } from "@/hooks/use-auto-mark-read";
 import { useI18n } from "@/lib/i18n";
-import { cn, formatDate } from "@/lib/utils";
+import { cn, useFormatDate } from "@/lib/utils";
 import { processArticleContent } from "@/lib/content";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
@@ -36,6 +36,7 @@ import { autoMarkReadDelayMs } from "@/store/preferences";
 
 export function ArticleDrawer() {
   const { t } = useI18n();
+  const formatDate = useFormatDate();
   const {
     selectedArticleId,
     setSelectedArticle,

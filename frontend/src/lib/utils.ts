@@ -1,7 +1,11 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import DOMPurify from "dompurify";
-import { getPreferredLocale } from "@/store/preferences";
+import {
+  getPreferredLocale,
+  usePreferencesStore,
+  type DateFormat,
+} from "@/store/preferences";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -11,7 +15,47 @@ export function unixToDate(timestamp: number): Date {
   return new Date(timestamp * 1000);
 }
 
-export function formatDate(timestamp: number): string {
+function pad2(n: number): string {
+  return String(n).padStart(2, "0");
+}
+
+// Absolute date in the chosen layout. Fixed layouts are built by hand rather
+// than via Intl so they stay identical regardless of the UI language.
+export function formatAbsoluteDate(
+  date: Date,
+  format: DateFormat,
+  locale: string = getPreferredLocale(),
+): string {
+  const d = pad2(date.getDate());
+  const m = pad2(date.getMonth() + 1);
+  const y = date.getFullYear();
+
+  switch (format) {
+    case "uk":
+      return `${d}/${m}/${y}`;
+    case "us":
+      return `${m}/${d}/${y}`;
+    case "iso":
+      return `${y}-${m}-${d}`;
+    case "eu":
+      return `${d}.${m}.${y}`;
+    case "long":
+      return new Intl.DateTimeFormat(locale, {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      }).format(date);
+    case "auto":
+      return date.toLocaleDateString(locale);
+  }
+}
+
+// Recent timestamps (under a week) stay relative ("3 hours ago") in every
+// format; older ones render as an absolute date in the chosen layout.
+export function formatDate(
+  timestamp: number,
+  format: DateFormat = usePreferencesStore.getState().dateFormat,
+): string {
   const date = unixToDate(timestamp);
   const locale = getPreferredLocale();
   const now = new Date();
@@ -27,7 +71,14 @@ export function formatDate(timestamp: number): string {
   if (hours < 24) return rtf.format(-hours, "hour");
   if (days < 7) return rtf.format(-days, "day");
 
-  return date.toLocaleDateString(locale);
+  return formatAbsoluteDate(date, format, locale);
+}
+
+// Subscribes the calling component to the date-format preference so rendered
+// dates update as soon as the setting changes.
+export function useFormatDate(): (timestamp: number) => string {
+  const dateFormat = usePreferencesStore((s) => s.dateFormat);
+  return (timestamp: number) => formatDate(timestamp, dateFormat);
 }
 
 export function formatRelativeTime(timestamp: number): string {
