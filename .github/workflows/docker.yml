@@ -3,6 +3,8 @@ name: docker
 on:
   release:
     types: [published]
+  # manual rebuild of the main image (e.g. right after enabling Actions on a fork)
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -18,7 +20,7 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   # supersede stale main builds, but never cancel a release image mid-push
-  cancel-in-progress: ${{ github.event_name == 'push' }}
+  cancel-in-progress: ${{ github.event_name != 'release' }}
 
 jobs:
   docker:
@@ -53,14 +55,14 @@ jobs:
             # tag: majors don't carry that guarantee across minors.
             type=semver,pattern={{major}}.{{minor}},enable=${{ github.event_name == 'release' }}
             # on push to main: tag with main
-            type=raw,value=main,enable=${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+            type=raw,value=main,enable=${{ github.event_name != 'release' && github.ref == 'refs/heads/main' }}
       - name: Set up toolchains
-        if: github.event_name == 'push'
+        if: github.event_name != 'release'
         uses: ./.github/actions/setup-toolchains
         with:
           setup-node: "true"
       - name: Build binaries from source
-        if: github.event_name == 'push'
+        if: github.event_name != 'release'
         run: |
           mkdir -p ./build
           rm -f ./build/fusion-linux-amd64 ./build/fusion-linux-arm64
